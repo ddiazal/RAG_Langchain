@@ -1,10 +1,17 @@
 import os
 from typing import Any
 
+import openai
+from langchain_openai import ChatOpenAI
+from langchain_experimental.graph_transformer import LLMGraphTransformer
+# Import unstructured text loader
 from langchain_community.document_loaders import UnstructuredHTMLLoader
+# Import text splitter
 from langchain_text_splitters import TokenTextSplitter
+# Import graph database instance
 from langchain_community.graphs import Neo4jGraph
 
+openai_api_key = os.getenv("OPENAI_API_KEY")
 
 # Create a document loader for unstructured HTML
 html_loader = UnstructuredHTMLLoader("<html_file>")
@@ -12,6 +19,19 @@ html_loader = UnstructuredHTMLLoader("<html_file>")
 document = html_loader.load()
 
 # Split data into chunks
+splitter = TokenTextSplitter(chunk_size=100, chunk_overlap=20)
+
+# Instantiate LLM
+llm = ChatOpenAI(
+    api_key=openai_api_key,
+    temperature=0.05,
+    model_name="gpt-4o-mini"
+)
+
+# Instantiate graph transformer passing LLM
+llm_transformer = LLMGraphTransformer(llm=llm)
+# Convert document to graph document
+graph_documents = llm_transformer.convert_to_graph_documents(document)
 
 # Get graph url
 neo4j_url: str = os.environ.get("NEO4J_URL")
@@ -26,3 +46,12 @@ graph: Neo4jGraph = Neo4jGraph(
     username=neo4j_un,
     password=neo4j_password
 )
+
+# Add the graph documents, sources, and include entity labels
+graph.add_graph_documents(
+    graph_documents,
+    include_source=True,
+    baseEntityLabel=True
+)
+
+graph.refresh_schema()
