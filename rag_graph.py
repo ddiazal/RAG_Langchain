@@ -11,6 +11,8 @@ html_loader = UnstructuredHTMLLoader("<html_file>")
 # Load data from a HTML file
 document = html_loader.load()
 
+# Split data into chunks
+
 # Get graph url
 neo4j_url: str = os.environ.get("NEO4J_URL")
 # Get graph username
