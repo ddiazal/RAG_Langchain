@@ -3,6 +3,7 @@ from typing import Any
 
 import openai
 from langchain_openai import ChatOpenAI
+from langchain_core.prompts import FewShotPromptTemplate, PromptTemplate
 from langchain_community.chains.graph_qa.cypher import GraphCypherQAChain
 from langchain_experimental.graph_transformer import LLMGraphTransformer
 # Import unstructured text loader
@@ -92,3 +93,55 @@ results = graph_qa_chain.invoke(
 
 # Print the result text
 print(f"Final answer: {results['result']}")
+
+
+####################### Improving Graph Retrieval ##################
+# Create an example prompt template
+example_prompt = PromptTemplate.from_template(
+    "User input: {question}\nCypher query: {query}"
+)
+
+# Create examples
+examples: list[dict[str, Any]] = [
+    {
+        "question": "How many notable large language models are mentioned in the article?",
+        "query": "MATCH (m:Concept {id: 'Large Language Model'}) RETURN count(DISTINCT m)",
+    },
+    {
+        "question": "Which companies or organizations have developed the large language models mentioned?",
+        "query": "MATCH (o:Organization)-[:DEVELOPS]->(m:Concept {id: 'Large Language Model'}) RETURN DISTINCT o.id",
+    },
+    {
+        "question": "What is the largest model size mentioned in the article, in terms of number of parameters?",
+        "query": "MATCH (m:Concept {id: 'Large Language Model'}) RETURN max(m.parameters) AS largest_model",
+     },
+]
+
+# Create the few-shot prompt template
+cypher_prompt = FewShotPromptTemplate(
+    examples=examples,
+    example_prompt=example_prompt,
+    prefix=("You are a Neo4j expert. Given an input question, create a syntactically correct Cypher query to run."
+           "\n\nHere is the schema information\n{schema}.\n\nBelow are a number of examples of questions and their "
+           "corresponding Cypher queries."),
+    suffix="User input: {question}\nCypher query: ",
+    input_variables=["question"]
+)
+
+# Create an improved the graph Cypher QA chain
+graph_qa_chain = GraphCypherQAChain.from_llm(
+    llm=llm,
+    graph=graph,
+    cypher_prompt=cypher_prompt,
+    validate_cypher=True,
+    verbose=True,
+)
+
+# Invoke chain
+result = graph_qa_chain.invoke(
+    {
+        "query": "What is the more accurate model?"
+    }
+)
+
+print(f"Final answer: {result['result']}")
