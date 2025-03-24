@@ -54,4 +54,5 @@ graph.add_graph_documents(
     baseEntityLabel=True
 )
 
+# refresh graph schema
 graph.refresh_schema()
