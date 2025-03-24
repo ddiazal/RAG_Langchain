@@ -56,3 +56,12 @@ graph.add_graph_documents(
 
 # refresh graph schema
 graph.refresh_schema()
+
+# Print the graph schema
+print(graph.get_schema)
+
+# Query the graph
+results = graph.query("""
+MATCH (relativity:Concept {id: "Theory Of Relativity"}) <-[:KNOWN_FOR]- (scientist)
+return scientist
+""")
