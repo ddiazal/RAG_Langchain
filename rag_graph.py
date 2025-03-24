@@ -12,6 +12,7 @@ from langchain_text_splitters import TokenTextSplitter
 # Import graph database instance
 from langchain_community.graphs import Neo4jGraph
 
+# Get the OpenAI secret key
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
 # Create a document loader for unstructured HTML
@@ -34,6 +35,8 @@ llm_transformer = LLMGraphTransformer(llm=llm)
 # Convert document to graph document
 graph_documents = llm_transformer.convert_to_graph_documents(document)
 
+
+################# Creating Graph Document to GraphDB ###############
 # Get graph url
 neo4j_url: str = os.environ.get("NEO4J_URL")
 # Get graph username
@@ -67,11 +70,17 @@ print(graph.get_schema)
 #return scientist
 #""")
 
-############## Querying the graph ###################
+###################### Querying the graph #########################
 # Create the Graph Cypher QA chain
 graph_qa_chain = GraphCypherQAChain.from_llm(
     llm=llm,
     graph=graph,
+    # Filtering the graph to improve model accuracy
+    # exclude_types=["type"],
+    # Validating the Cypher query
+    # validate_cypher=True,
+    # Adding few-shot examples
+    # cypher_prompt="cypher_prompt_template",
     verbose=True,
 )
 # Invoke the chain with the input provided
