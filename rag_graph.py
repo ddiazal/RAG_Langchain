@@ -1,5 +1,15 @@
 import os
+from typing import Any
+
+from langchain_community.document_loaders import UnstructuredHTMLLoader
+from langchain_text_splitters import TokenTextSplitter
 from langchain_community.graphs import Neo4jGraph
+
+
+# Create a document loader for unstructured HTML
+html_loader = UnstructuredHTMLLoader("<html_file>")
+# Load data from a HTML file
+document = html_loader.load()
 
 # Get graph url
 neo4j_url: str = os.environ.get("NEO4J_URL")
