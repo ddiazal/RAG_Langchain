@@ -3,6 +3,7 @@ from typing import Any
 
 import openai
 from langchain_openai import ChatOpenAI
+from langchain_community.chains.graph_qa.cypher import GraphCypherQAChain
 from langchain_experimental.graph_transformer import LLMGraphTransformer
 # Import unstructured text loader
 from langchain_community.document_loaders import UnstructuredHTMLLoader
@@ -61,7 +62,24 @@ graph.refresh_schema()
 print(graph.get_schema)
 
 # Query the graph
-results = graph.query("""
-MATCH (relativity:Concept {id: "Theory Of Relativity"}) <-[:KNOWN_FOR]- (scientist)
-return scientist
-""")
+#results = graph.query("""
+#MATCH (relativity:Concept {id: "Theory Of Relativity"}) <-[:KNOWN_FOR]- (scientist)
+#return scientist
+#""")
+
+############## Querying the graph ###################
+# Create the Graph Cypher QA chain
+graph_qa_chain = GraphCypherQAChain.from_llm(
+    llm=llm,
+    graph=graph,
+    verbose=True,
+)
+# Invoke the chain with the input provided
+results = graph_qa_chain.invoke(
+    {
+        "query": "What is the more accurate model?"
+    }
+)
+
+# Print the result text
+print(f"Final answer: {results['result']}")
